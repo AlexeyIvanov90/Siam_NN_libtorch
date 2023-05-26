@@ -1,0 +1,7 @@
+*.dll
+*.vcxproj
+*.filters
+*.user
+bin
+cmake
+x64
