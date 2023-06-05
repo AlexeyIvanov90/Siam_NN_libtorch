@@ -2,7 +2,7 @@
 #include  "custom_dataset.h"
 
 
-void classification(std::string path)
+void classification(std::string path, std::string path_NN)
 {
 	std::string loc = path;
 
@@ -11,55 +11,59 @@ void classification(std::string path)
 	cv::imshow("", img);
 	cv::waitKey();
 
-	// Convert the image and label to a tensor.
-	torch::Tensor img_tensor = torch::from_blob(img.data, { 1, img.rows, img.cols, 3 }, torch::kByte);
-	img_tensor = img_tensor.permute({ 0, 3, 1, 2 }); // convert to CxHxW
-	img_tensor = img_tensor.to(torch::kF32);
+	torch::Tensor img_tensor = torch::from_blob(img.data, { img.rows, img.cols, 3 }, torch::kByte).clone();
+	img_tensor = img_tensor.toType(torch::kFloat);
+	img_tensor = img_tensor.div(255);
+	img_tensor = img_tensor.permute({ 2,0,1 });
+	img_tensor = img_tensor.unsqueeze(0);
+
+	img_tensor.to(torch::kCUDA);
 
 	// Load the model.
 	ConvNet model(3, 64, 64);
-	torch::load(model, "../best_model.pt");
+	torch::load(model, path_NN);
 
 	// Predict the probabilities for the classes.
-	//torch::Tensor log_prob = model(img_tensor);
-	torch::Tensor log_prob = model->forward(img_tensor);
+	torch::Tensor log_prob = model(img_tensor);
+	//torch::Tensor log_prob = model->forward(img_tensor);
 	torch::Tensor prob = torch::exp(log_prob);
 
 	printf("Probability of being\n\
-    an apple = %.2f percent\n\
-    a banana = %.2f percent\n", prob[0][0].item<float>()*100., prob[0][1].item<float>()*100.);
+    an zerno = %.2f percent\n\
+    a zerno primes = %.2f percent\n", prob[0][0].item<float>()*100., prob[0][1].item<float>()*100.);
 }
 
 
-void train(int epochs)
+void train(std::string file_names_csv, std::string path_save_NN, int epochs, torch::Device device)
 {
-	// Load the model.
-	ConvNet model(3, 64, 64);
+	if (device == torch::kCPU)
+		std::cout << "Training on CPU" << std::endl;
+	else
+		std::cout << "Training on GPU" << std::endl;
 
-	// Generate your data set. At this point you can add transforms to you data set, e.g. stack your
-	// batches into a single tensor.
-	std::string file_names_csv = "../file_names.csv";
+	ConvNet model(3, 64, 64);
+	model->to(device);
+	
+	torch::data::DataLoaderOptions OptionsData;
+	OptionsData.batch_size(100).workers(4);
+
 	auto data_set = CustomDataset(file_names_csv).map(torch::data::transforms::Stack<>());
 
-	// Generate a data loader.
-	int64_t batch_size = 32;
 	auto data_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
 		data_set,
-		batch_size);
+		OptionsData);
 
-	// Chose and optimizer.
 	torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
 
-	// Train the network.
 	int64_t log_interval = 10;
 	int dataset_size = data_set.size().value();
 
-	// Record best loss.
 	float best_mse = std::numeric_limits<float>::max();
 
+	model->train();
+	
 	for (int epoch = 1; epoch <= epochs; epoch++) {
 
-		// Track loss.
 		size_t batch_idx = 0;
 		float mse = 0.; // mean squared error
 		int count = 0;
@@ -68,11 +72,12 @@ void train(int epochs)
 			auto imgs = batch.data;
 			auto labels = batch.target.squeeze();
 
-			imgs = imgs.to(torch::kF32);
-			labels = labels.to(torch::kInt64);
+			imgs = imgs.to(device);
+			labels = labels.to(device);
 
 			optimizer.zero_grad();
 			auto output = model(imgs);
+
 			auto loss = torch::nll_loss(output, labels);
 
 			loss.backward();
@@ -100,8 +105,15 @@ void train(int epochs)
 
 		if (mse < best_mse)
 		{
-			torch::save(model, "../best_model.pt");
+			model->to(torch::kCPU);
+			model->eval();
+			torch::save(model, path_save_NN);
 			best_mse = mse;
+			std::cout << "model save" << std::endl;
+			if (epoch != epochs) {
+				model->to(device);
+				model->train();
+			}
 		}
 	}
 }

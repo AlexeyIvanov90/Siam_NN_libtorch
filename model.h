@@ -2,7 +2,6 @@
 
 #include <torch/torch.h>
 #include <opencv2/opencv.hpp>
-//#include "custom_dataset.h"
 
 struct ConvNetImpl : public torch::nn::Module 
 {
@@ -20,17 +19,16 @@ struct ConvNetImpl : public torch::nn::Module
         register_module("lin2", lin2);
     };
 
-    // Implement the forward method.
     torch::Tensor forward(torch::Tensor x) {
 
         x = torch::relu(torch::max_pool2d(conv1(x), 2));
         x = torch::relu(torch::max_pool2d(conv2(x), 2));
 
         // Flatten.
-		//std::cout << x.type_as() << std::endl;
-        //x = x.view({-1, n});
+        x = x.view({-1, n});
 
         x = torch::relu(lin1(x));
+
         x = torch::log_softmax(lin2(x), 1/*dim*/);
 
         return x;
@@ -53,5 +51,5 @@ struct ConvNetImpl : public torch::nn::Module
 
 TORCH_MODULE(ConvNet);
 
-void classification(std::string path);
-void train(int epochs);
+void classification(std::string path, std::string path_NN);
+void train(std::string file_names_csv, std::string path_NN, int epochs, torch::Device device = torch::kCPU);
