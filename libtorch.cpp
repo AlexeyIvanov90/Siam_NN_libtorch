@@ -1,46 +1,35 @@
 #include "model.h"
 
-void test(torch::DeviceType device) {
-	ConvNet model(3, 64, 64);
-	model->to(device);
-	torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
+#define SIAM
 
-	auto imgs = torch::zeros({ 3,64,64 }, torch::kFloat);
-	auto labels = torch::zeros(1, torch::kInt64);
+	int main()
+	{
+		//for (int count = 0; count < data_set.size();count++)
+			//data_set.get(count).print();
 
-	imgs = imgs.unsqueeze(0);
+		std::string file_csv = "../file_names.csv";
+		std::string path_NN = "../best_model.pt";
+		std::string path_img_1 = "../26.png";
+		std::string path_img_2 = "../61.png";
 
-	imgs = imgs.to(device);
-	labels = labels.to(device);
+		auto epochs = 1;
+		auto device = torch::kCPU;
 
-	optimizer.zero_grad();
-	auto output = model(imgs);
-	auto loss = torch::nll_loss(output, labels);
+		if (torch::cuda::is_available()) {
+			std::cout << "CUDA is available!" << std::endl;
+			device = torch::kCUDA;
+		}
 
-	loss.backward();
-	optimizer.step();
+		device = torch::kCPU;
+#ifdef SIAM
+		siam_train(file_csv, path_NN, epochs, device);
+		siam_classification(path_img_1, path_img_2, path_NN);
+		siam_classification(path_img_1, path_img_1, path_NN);
+#else
+		train(file_csv, path_NN, epochs, device);
+		classification(path_img_1, path_NN);
+		classification(path_img_2, path_NN);
+#endif
 
-	std::cout << labels << std::endl;
-	std::cout << output << std::endl;
-}
-
-int main()
-{
-	std::string file_csv = "../file_names.csv";
-	std::string path_NN = "../best_model.pt";
-	std::string path_img = "../26.png";
-
-	auto epochs = 2;
-	auto device = torch::kCPU;
-
-	if (torch::cuda::is_available()) {
-		std::cout << "CUDA is available!" << std::endl;
-		device = torch::kCUDA;
+		return 0;
 	}
-
-	device = torch::kCPU;
-	   	 
-	train(file_csv, path_NN, epochs, device);
-	classification(path_img, path_NN);
-	return 0;
-}
