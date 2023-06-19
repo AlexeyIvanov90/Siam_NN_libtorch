@@ -73,6 +73,9 @@ void Siam_data_set::ñreate_data() {
 
 Element_data Siam_data_set::get(size_t index) {
 	Element obj = data.at(index);
+
+	//obj.print();
+
 	torch::Tensor img_1 = img_to_tensor(obj.img_1);
 	torch::Tensor img_2 = img_to_tensor(obj.img_2);
 	torch::Tensor label = torch::full({ 1 }, obj.label);

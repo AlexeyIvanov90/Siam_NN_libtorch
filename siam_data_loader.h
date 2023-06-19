@@ -2,6 +2,7 @@
 
 #include "siam_data_set.h"
 #include <thread>
+#include <random> 
 
 struct Batch
 {
@@ -24,6 +25,8 @@ private:
 	size_t count_batch = 0;
 	Siam_data_set data;
 
+	std::vector<size_t> random_index;
+	//std::random_device rd;
 public:
 	Siam_data_loader(Siam_data_set data, size_t batch_size);
 	~Siam_data_loader();
@@ -31,4 +34,6 @@ public:
 	Batch Siam_data_loader::get_batch();
 	int size_batch();
 	bool epoch_end();
+
+	void random_data();
 };

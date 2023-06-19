@@ -13,9 +13,18 @@ struct Element
 
 	void print() {
 		std::cout << "Element:" << std::endl;
+		cv::Mat img_1_show = cv::imread(img_1);
+		cv::Mat img_2_show = cv::imread(img_2);
+
 		std::cout << img_1 << std::endl;
+		cv::imshow("Img 1", img_1_show);
+
 		std::cout << img_2 << std::endl;
+		cv::imshow("Img 2", img_2_show);
+
 		std::cout << label << std::endl;
+
+		cv::waitKey();
 	}
 
 	std::string img_1;

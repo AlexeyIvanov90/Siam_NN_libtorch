@@ -4,15 +4,27 @@
 
 	int main()
 	{
-		//for (int count = 0; count < data_set.size();count++)
-			//data_set.get(count).print();
+		std::vector<std::string> paths_csv;// путь к файлам с тренеровачными данными
+		paths_csv.push_back("../category_1.csv");
+		paths_csv.push_back("../category_2.csv");
 
-		std::string file_csv = "../file_names.csv";
+		std::vector<std::string> paths_csv_test;// путь к файлам с тестовыми данными
+		paths_csv_test.push_back("../category_1_test.csv");
+		paths_csv_test.push_back("../category_2_test.csv");
+
+
 		std::string path_NN = "../best_model.pt";
-		std::string path_img_1 = "../26.png";
-		std::string path_img_2 = "../61.png";
+		std::string path_img_1 = "../1.png";// зерно
+		std::string path_img_2 = "../2.png";// зерно
+		std::string path_img_3 = "../3.png";// не зерно
+		std::string path_img_4 = "../4.png";// не зерно
+		std::string path_img_5 = "../5.png";// зерно
+		std::string path_img_6 = "../6.png";// зерно
 
-		auto epochs = 1;
+
+		auto epochs = 50;
+		auto batch_size = 1;
+
 		auto device = torch::kCPU;
 
 		if (torch::cuda::is_available()) {
@@ -22,9 +34,23 @@
 
 		device = torch::kCPU;
 #ifdef SIAM
-		siam_train(file_csv, path_NN, epochs, device);
-		siam_classification(path_img_1, path_img_2, path_NN);
-		siam_classification(path_img_1, path_img_1, path_NN);
+		//siam_train(paths_csv, path_NN, epochs, batch_size);
+
+		//siam_test(paths_csv, path_NN);
+
+		
+		siam_classification(path_img_1, path_img_2, path_NN);//0
+		siam_classification(path_img_3, path_img_4, path_NN);//0
+
+		siam_classification(path_img_1, path_img_3, path_NN);//1
+		siam_classification(path_img_1, path_img_4, path_NN);//1
+
+		siam_classification(path_img_2, path_img_3, path_NN);//1
+		siam_classification(path_img_2, path_img_4, path_NN);//1
+
+		siam_classification(path_img_5, path_img_6, path_NN);//0
+
+
 #else
 		train(file_csv, path_NN, epochs, device);
 		classification(path_img_1, path_NN);

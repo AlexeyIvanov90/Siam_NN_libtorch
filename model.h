@@ -8,17 +8,19 @@
 struct ConvNetImpl : public torch::nn::Module 
 {
     ConvNetImpl(int64_t channels, int64_t height, int64_t width) 
-        : conv1(torch::nn::Conv2dOptions(3 /*input channels*/, 8 /*output channels*/, 5 /*kernel size*/).stride(2)),
+		: conv1(torch::nn::Conv2dOptions(3 /*input channels*/, 8 /*output channels*/, 5 /*kernel size*/).stride(2)),
           conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
           
           n(GetConvOutput(channels, height, width)),
-          lin1(n, 32),
-          lin2(32, 1 /*number of output classes*/) {
+          lin1(n, 256),
+          lin2(256, 256 /*number of output classes*/),
+		  lin3(256, 1) {
 
         register_module("conv1", conv1);
         register_module("conv2", conv2);
         register_module("lin1", lin1);
         register_module("lin2", lin2);
+		register_module("lin3", lin3);
     };
 
 	torch::Tensor first_forward(torch::Tensor x) {
@@ -49,10 +51,10 @@ struct ConvNetImpl : public torch::nn::Module
 #ifdef DEBUG
 		std::cout << x << std::endl;
 #endif
+		x = lin2(x);
+		//x = torch::sigmoid(x);
 
-		//x = lin2(x);
-
-		//x = torch::log_softmax(lin2(x), 1/*dim*/);
+		//x = torch::relu(lin2(x));
 
 		return x;
 	};
@@ -62,22 +64,22 @@ struct ConvNetImpl : public torch::nn::Module
 		x = first_forward(x);
 		y = first_forward(y);
 
-
 #ifdef DEBUG
 		std::cout << x << std::endl;
 		std::cout << y << std::endl;
 #endif
-			   		 		
 		auto siam = torch::abs(x - y);
 
+		siam = lin3(siam);
+
+		//siam = torch::sigmoid(lin3(siam));
 
 #ifdef DEBUG
 		std::cout << "siam:\n" << siam;
 #endif
-		siam = lin2(siam);
+		//siam = torch::sigmoid(lin3(siam));
 		//siam = torch::relu(lin2(siam));
 
-		std::cout << "siam:\n" << siam;
 #ifdef DEBUG
 		std::cout << "siam:\n" << siam;
 #endif
@@ -97,7 +99,7 @@ struct ConvNetImpl : public torch::nn::Module
 
     torch::nn::Conv2d conv1, conv2;
     int64_t n;
-    torch::nn::Linear lin1, lin2;
+    torch::nn::Linear lin1, lin2, lin3;
 };
 
 TORCH_MODULE(ConvNet);
@@ -106,4 +108,5 @@ void classification(std::string path, std::string path_NN);
 void train(std::string file_names_csv, std::string path_NN, int epochs, torch::Device device = torch::kCPU);
 
 void siam_classification(std::string path_img_1, std::string path_img_2, std::string path_NN);
-void siam_train(std::string file_names_csv, std::string path_NN, int epochs, torch::Device device = torch::kCPU);
+void siam_train(std::vector<std::string> paths_csv, std::string path_save_NN, int epochs, int batch_size, torch::Device device = torch::kCPU);
+void siam_test(std::vector<std::string> paths_csv, std::string path_NN);
