@@ -1,7 +1,5 @@
 #include "model.h"
 
-#define SIAM
-
 	int main()
 	{
 		std::vector<std::string> paths_csv;// путь к файлам с тренеровачными данными
@@ -12,7 +10,6 @@
 		paths_csv_test.push_back("../category_1_test.csv");
 		paths_csv_test.push_back("../category_2_test.csv");
 
-
 		std::string path_NN = "../best_model.pt";
 		std::string path_img_1 = "../1.png";// зерно
 		std::string path_img_2 = "../2.png";// зерно
@@ -21,8 +18,7 @@
 		std::string path_img_5 = "../5.png";// зерно
 		std::string path_img_6 = "../6.png";// зерно
 
-
-		auto epochs = 50;
+		auto epochs = 1;
 		auto batch_size = 1;
 
 		auto device = torch::kCPU;
@@ -33,29 +29,18 @@
 		}
 
 		device = torch::kCPU;
-#ifdef SIAM
-		//siam_train(paths_csv, path_NN, epochs, batch_size);
 
-		//siam_test(paths_csv, path_NN);
+		siam_train(paths_csv, path_NN, epochs, batch_size);
 
+		siam_test(paths_csv, path_NN);
 		
 		siam_classification(path_img_1, path_img_2, path_NN);//0
 		siam_classification(path_img_3, path_img_4, path_NN);//0
-
 		siam_classification(path_img_1, path_img_3, path_NN);//1
 		siam_classification(path_img_1, path_img_4, path_NN);//1
-
 		siam_classification(path_img_2, path_img_3, path_NN);//1
 		siam_classification(path_img_2, path_img_4, path_NN);//1
-
 		siam_classification(path_img_5, path_img_6, path_NN);//0
-
-
-#else
-		train(file_csv, path_NN, epochs, device);
-		classification(path_img_1, path_NN);
-		classification(path_img_2, path_NN);
-#endif
-
+		
 		return 0;
 	}

@@ -9,52 +9,36 @@ struct ConvNetImpl : public torch::nn::Module
 {
     ConvNetImpl(int64_t channels, int64_t height, int64_t width) 
 		: conv1(torch::nn::Conv2dOptions(3 /*input channels*/, 8 /*output channels*/, 5 /*kernel size*/).stride(2)),
-          conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
-          
-          n(GetConvOutput(channels, height, width)),
-          lin1(n, 256),
-          lin2(256, 256 /*number of output classes*/),
-		  lin3(256, 1) {
+		bn2d_1(torch::nn::BatchNorm2d(8)),
+        conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
+		bn2d_2(torch::nn::BatchNorm2d(16)),
+        n(GetConvOutput(channels, height, width)),
+        lin1(n, 256),
+        lin2(256, 256),
+		lin3(256, 1) {
 
         register_module("conv1", conv1);
+		register_module("bn2d_1", bn2d_1);
         register_module("conv2", conv2);
+		register_module("bn2d_2", bn2d_2);
         register_module("lin1", lin1);
         register_module("lin2", lin2);
 		register_module("lin3", lin3);
     };
 
 	torch::Tensor first_forward(torch::Tensor x) {
-#ifdef DEBUG
-		std::cout << x << std::endl;
-#endif
-
 		x = torch::relu(torch::max_pool2d(conv1(x), 2));
-
-#ifdef DEBUG
-		std::cout << x << std::endl;
-#endif
-
+		x = torch::batch_norm(bn2d_1->forward(x), bn1W, bnBias1W, bnmean1W, bnvar1W, true, 0.9, 0.001, true);
 		x = torch::relu(torch::max_pool2d(conv2(x), 2));
-
-#ifdef DEBUG
-		std::cout << x << std::endl;
-#endif
+		x = torch::batch_norm(bn2d_2->forward(x), bn2W, bnBias2W, bnmean2W, bnvar2W, true, 0.9, 0.001, true);
 
 		x = x.view({ -1, n });
 
-#ifdef DEBUG
-		std::cout << x << std::endl;
-#endif
-
 		x = torch::relu(lin1(x));
 
-#ifdef DEBUG
-		std::cout << x << std::endl;
-#endif
-		x = lin2(x);
-		//x = torch::sigmoid(x);
+		x = torch::sigmoid(lin2(x));
 
-		//x = torch::relu(lin2(x));
+		//std::cout << x << std::endl;
 
 		return x;
 	};
@@ -64,26 +48,13 @@ struct ConvNetImpl : public torch::nn::Module
 		x = first_forward(x);
 		y = first_forward(y);
 
-#ifdef DEBUG
-		std::cout << x << std::endl;
-		std::cout << y << std::endl;
-#endif
-		auto siam = torch::abs(x - y);
+		x = torch::abs(x - y);
 
-		siam = lin3(siam);
+		x = lin3(x);
 
-		//siam = torch::sigmoid(lin3(siam));
+		x = torch::sigmoid(x);
 
-#ifdef DEBUG
-		std::cout << "siam:\n" << siam;
-#endif
-		//siam = torch::sigmoid(lin3(siam));
-		//siam = torch::relu(lin2(siam));
-
-#ifdef DEBUG
-		std::cout << "siam:\n" << siam;
-#endif
-		return siam;
+		return x;
     };
 
     // Get number of elements of output.
@@ -98,8 +69,19 @@ struct ConvNetImpl : public torch::nn::Module
 
 
     torch::nn::Conv2d conv1, conv2;
+	torch::nn::BatchNorm2d bn2d_1, bn2d_2;
     int64_t n;
     torch::nn::Linear lin1, lin2, lin3;
+
+	torch::Tensor bn1W;
+	torch::Tensor bnBias1W;
+	torch::Tensor bnmean1W;
+	torch::Tensor bnvar1W;
+
+	torch::Tensor bn2W;
+	torch::Tensor bnBias2W;
+	torch::Tensor bnmean2W;
+	torch::Tensor bnvar2W;
 };
 
 TORCH_MODULE(ConvNet);
