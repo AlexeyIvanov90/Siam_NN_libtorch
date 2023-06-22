@@ -1,26 +1,17 @@
 #include "model.h"
+#include "siam_data_loader.h"
+
 
 	int main()
 	{
-		std::vector<std::string> paths_csv;// путь к файлам с тренеровачными данными
-		paths_csv.push_back("../category_1.csv");
-		paths_csv.push_back("../category_2.csv");
+		std::string train_csv = "../siam_data_train.csv"; //path csv file
+		std::string val_csv = "../siam_data_val.csv";
+		std::string test_csv = "../siam_data_test.csv";
 
-		std::vector<std::string> paths_csv_test;// путь к файлам с тестовыми данными
-		paths_csv_test.push_back("../category_1_test.csv");
-		paths_csv_test.push_back("../category_2_test.csv");
+		std::string path_NN = "../best_model.pt"; //path model NN
 
-		std::string path_NN = "../best_model.pt";
-		std::string path_img_1 = "../1.png";// зерно
-		std::string path_img_2 = "../2.png";// зерно
-		std::string path_img_3 = "../3.png";// не зерно
-		std::string path_img_4 = "../4.png";// не зерно
-		std::string path_img_5 = "../5.png";// зерно
-		std::string path_img_6 = "../6.png";// зерно
-
-		auto epochs = 1;
+		auto epochs = 10;
 		auto batch_size = 1;
-
 		auto device = torch::kCPU;
 
 		if (torch::cuda::is_available()) {
@@ -28,19 +19,20 @@
 			device = torch::kCUDA;
 		}
 
-		device = torch::kCPU;
+		Siam_data_set data_set_train(train_csv);
+		Siam_data_set data_set_val(val_csv);
+		Siam_data_set data_set_test(test_csv);
 
-		siam_train(paths_csv, path_NN, epochs, batch_size);
+		Siam_data_loader train_loader(data_set_train, batch_size);
 
-		siam_test(paths_csv, path_NN);
-		
-		siam_classification(path_img_1, path_img_2, path_NN);//0
-		siam_classification(path_img_3, path_img_4, path_NN);//0
-		siam_classification(path_img_1, path_img_3, path_NN);//1
-		siam_classification(path_img_1, path_img_4, path_NN);//1
-		siam_classification(path_img_2, path_img_3, path_NN);//1
-		siam_classification(path_img_2, path_img_4, path_NN);//1
-		siam_classification(path_img_5, path_img_6, path_NN);//0
+		siam_train(train_loader, data_set_val, path_NN, epochs);
+
+		ConvNet model(3, 64, 64);
+		torch::load(model, path_NN);
+		model->eval();
+
+		std::cout <<"Test data ";
+		siam_test(data_set_test, model);
 		
 		return 0;
 	}

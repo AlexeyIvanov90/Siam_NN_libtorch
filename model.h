@@ -1,7 +1,9 @@
 #pragma once
 
-#include <torch/torch.h>
-#include <opencv2/opencv.hpp>
+//#include <torch/torch.h>
+//#include <opencv2/opencv.hpp>
+#include "siam_data_set.h"
+#include "siam_data_loader.h"
 
 //#define DEBUG
 
@@ -13,9 +15,9 @@ struct ConvNetImpl : public torch::nn::Module
         conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
 		bn2d_2(torch::nn::BatchNorm2d(16)),
         n(GetConvOutput(channels, height, width)),
-        lin1(n, 256),
-        lin2(256, 256),
-		lin3(256, 1) {
+        lin1(n, 64),
+        lin2(64, 64),
+		lin3(64, 1) {
 
         register_module("conv1", conv1);
 		register_module("bn2d_1", bn2d_1);
@@ -36,9 +38,9 @@ struct ConvNetImpl : public torch::nn::Module
 
 		x = torch::relu(lin1(x));
 
-		x = torch::sigmoid(lin2(x));
+		x = torch::relu(lin2(x));
 
-		//std::cout << x << std::endl;
+		//x = lin2(x);
 
 		return x;
 	};
@@ -86,9 +88,6 @@ struct ConvNetImpl : public torch::nn::Module
 
 TORCH_MODULE(ConvNet);
 
-void classification(std::string path, std::string path_NN);
-void train(std::string file_names_csv, std::string path_NN, int epochs, torch::Device device = torch::kCPU);
-
 void siam_classification(std::string path_img_1, std::string path_img_2, std::string path_NN);
-void siam_train(std::vector<std::string> paths_csv, std::string path_save_NN, int epochs, int batch_size, torch::Device device = torch::kCPU);
-void siam_test(std::vector<std::string> paths_csv, std::string path_NN);
+void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string path_save_NN, int epochs, torch::Device device = torch::kCPU);
+void siam_test(Siam_data_set data_test, ConvNet model);

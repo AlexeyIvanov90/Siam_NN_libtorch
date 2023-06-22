@@ -9,6 +9,7 @@
 
 struct Element
 {
+	Element() {};
 	Element(std::string img_1, std::string img_2, int label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
 
 	void print() {
@@ -51,13 +52,12 @@ struct Element_data
 class Siam_data_set
 {
 private:
-	std::vector<Element> data; // готовый датасет
-	std::vector < std::vector<std::string>> path_to_class_img; // 
-public:
-	Siam_data_set(std::vector<std::string> path_csv);
-	~Siam_data_set();
-	void сreate_data();
+	std::vector<Element> _data;
+
+public:	
+	Siam_data_set::Siam_data_set(std::string paths_csv);
 	Element_data get(size_t index);
+	void get_img(size_t index);
 	size_t size();
 };
 

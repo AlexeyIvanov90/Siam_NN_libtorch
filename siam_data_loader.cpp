@@ -13,9 +13,6 @@ void Siam_data_loader::random_data() {
 }
 
 Batch Siam_data_loader::get_batch() {
-	/*std::cout << "batch " << count_batch/batch_size + 1 << 
-		"/"<< data_size/batch_size + 1 << std::endl;*/
-
 	for (; count_batch < data_size; ) {
 		if (count_batch%batch_size == 0) {
 			Element_data x = data.get(random_index.at(count_batch));
@@ -42,8 +39,6 @@ Batch Siam_data_loader::get_batch() {
 	return out;
 }
 
-Siam_data_loader::~Siam_data_loader() {}
-
 bool Siam_data_loader::epoch_end() {
 	if (count_batch == data_size) {
 		count_batch = 0;
@@ -55,6 +50,15 @@ bool Siam_data_loader::epoch_end() {
 	}
 }
 
-int Siam_data_loader::size_batch() {
+size_t Siam_data_loader::size_batch() {
 	return batch_size;
 }
+
+size_t Siam_data_loader::num_batch() {
+	return count_batch / batch_size;
+}
+
+size_t Siam_data_loader::size() {
+	return data_size;
+}
+
