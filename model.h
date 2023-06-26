@@ -1,11 +1,7 @@
 #pragma once
 
-//#include <torch/torch.h>
-//#include <opencv2/opencv.hpp>
 #include "siam_data_set.h"
 #include "siam_data_loader.h"
-
-//#define DEBUG
 
 struct ConvNetImpl : public torch::nn::Module 
 {

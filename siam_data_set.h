@@ -53,12 +53,17 @@ class Siam_data_set
 {
 private:
 	std::vector<Element> _data;
+	std::vector<Element_data> _data_mem;
+	bool data_in_ram = false;
 
 public:	
-	Siam_data_set::Siam_data_set(std::string paths_csv);
+	Siam_data_set(std::string paths_csv);
 	Element_data get(size_t index);
+
 	void get_img(size_t index);
 	size_t size();
+
+	void load_to_mem();
 };
 
 torch::Tensor img_to_tensor(std::string file_location);

@@ -28,8 +28,8 @@ private:
 public:
 	Siam_data_loader(Siam_data_set data, size_t batch_size);
 
-	Batch Siam_data_loader::get_batch();
-	size_t Siam_data_loader::num_batch();
+	Batch get_batch();
+	size_t num_batch();
 	size_t size();
 	size_t size_batch();
 	bool epoch_end();

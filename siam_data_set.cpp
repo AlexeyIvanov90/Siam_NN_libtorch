@@ -1,6 +1,4 @@
 #include "siam_data_set.h"
-#include <future>
-
 
 auto ReadCsv(const std::string& location) -> std::vector<Element> {
 	std::fstream in(location, std::ios::in);
@@ -46,6 +44,9 @@ void Siam_data_set::get_img(size_t index) {
 }
 
 Element_data Siam_data_set::get(size_t index) {
+	if (data_in_ram)
+		return _data_mem.at(index);
+
 	auto obj = _data.at(index);
 
 	torch::Tensor img_1 = img_to_tensor(obj.img_1);
@@ -59,3 +60,10 @@ Element_data Siam_data_set::get(size_t index) {
 size_t Siam_data_set::size() {
 	return _data.size();
 }
+
+void Siam_data_set::load_to_mem() {
+	for(int i = 0; i < _data.size(); i++)
+		_data_mem.push_back(get(i));
+	data_in_ram = true;
+}
+

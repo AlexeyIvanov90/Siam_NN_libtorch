@@ -2,6 +2,7 @@
 #include "siam_data_loader.h"
 
 
+
 	int main()
 	{
 		std::string train_csv = "../siam_data_train.csv"; //path csv file
@@ -20,6 +21,8 @@
 		}
 
 		Siam_data_set data_set_train(train_csv);
+		data_set_train.load_to_mem();
+
 		Siam_data_set data_set_val(val_csv);
 		Siam_data_set data_set_test(test_csv);
 

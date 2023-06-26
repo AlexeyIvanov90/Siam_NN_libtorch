@@ -1,4 +1,7 @@
 #include "model.h"
+#include <chrono>
+
+
 
 void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string path_save_NN, int epochs, torch::Device device)
 {
@@ -20,10 +23,12 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 	model->train();
 
 	for (int epoch = 1; epoch <= epochs; epoch++) {
+		auto begin = std::chrono::steady_clock::now();
 
-		size_t batch_idx = 0;
 		float mse = 0.; // mean squared error
 		int count = 0;
+
+		size_t bath_counter = 0;
 
 		for (; !data_train.epoch_end();) {
 
@@ -40,13 +45,21 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 			imgs_2 = imgs_2.to(device);
 			labels = labels.to(device);
 
-			optimizer.zero_grad();
-
 			auto output = model->forward(imgs_1, imgs_2);
 
-			auto loss = (1 - labels) * torch::pow(output, 2) \
-				+ (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2);
-		
+			//auto loss = (1 - labels[0]) * torch::pow(output[0], 2) + (labels[0])* torch::pow(torch::clamp(1.0 - output[0], 0.0), 2);
+			//std::cout << "loss\n" << loss << std::endl;
+
+
+			//for (int obj = 1; obj < labels.sizes()[0]; obj++) {
+			//	auto tensor_buf = (1 - labels[obj]) * torch::pow(output[obj], 2) + (labels[obj])* torch::pow(torch::clamp(1.0 - output[obj], 0.0), 2);
+			//	loss = torch::cat({ loss, tensor_buf }, 0);
+			//}
+
+			//loss = torch::mean(loss);
+
+
+			auto loss = (1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2);
 			loss = torch::mean(loss);
 
 			loss.backward();
@@ -54,7 +67,8 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 
 			mse += loss.template item<float>();
 
-			batch_idx++;
+			optimizer.zero_grad();
+
 			count++;
 		}
 		std::cout << "\r";
@@ -68,6 +82,10 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 		model->eval();
 		siam_test(data_val, model);
 		model->train();
+
+		auto end = std::chrono::steady_clock::now();
+		auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+		std::cout << "Time for epoch: " << elapsed_ms.count() << " ms\n";
 
 		if (mse < best_mse)
 		{

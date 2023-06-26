@@ -13,6 +13,8 @@ void Siam_data_loader::random_data() {
 }
 
 Batch Siam_data_loader::get_batch() {
+	bool flag = false;
+
 	for (; count_batch < data_size; ) {
 		if (count_batch%batch_size == 0) {
 			Element_data x = data.get(random_index.at(count_batch));
@@ -24,9 +26,10 @@ Batch Siam_data_loader::get_batch() {
 		else {
 			Element_data x = data.get(random_index.at(count_batch));
 
-			batch_img_1 = torch::cat({ batch_img_1,x.img_1 }, 0);
+			batch_img_1 = torch::cat({ batch_img_1, x.img_1 }, 0);
 			batch_img_2 = torch::cat({ batch_img_2, x.img_2 }, 0);
 			batch_label = torch::cat({ batch_label, x.label }, 0);
+
 		}
 		count_batch++;
 		if (count_batch%batch_size == 0) {
@@ -34,9 +37,7 @@ Batch Siam_data_loader::get_batch() {
 		}
 	}
 
-	Batch out(batch_img_1, batch_img_2, batch_label);
-
-	return out;
+	return Batch(batch_img_1, batch_img_2, batch_label);
 }
 
 bool Siam_data_loader::epoch_end() {
