@@ -10,7 +10,7 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 	else
 		std::cout << "Training on GPU" << std::endl;
 
-	ConvNet model(3, 64, 64);
+	ConvNet model(3, 100, 200);
 	model->to(device);
 
 	torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
@@ -46,21 +46,26 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 			labels = labels.to(device);
 
 			auto output = model->forward(imgs_1, imgs_2);
+			/*
+			auto loss = (1 - labels[0]) * torch::pow(output[0], 2) + (labels[0])* torch::pow(torch::clamp(1.0 - output[0], 0.0), 2);
 
-			//auto loss = (1 - labels[0]) * torch::pow(output[0], 2) + (labels[0])* torch::pow(torch::clamp(1.0 - output[0], 0.0), 2);
-			//std::cout << "loss\n" << loss << std::endl;
+			for (int obj = 1; obj < labels.sizes()[0]; obj++) {
+				auto tensor_buf = (1 - labels[obj]) * torch::pow(output[obj], 2) + (labels[obj])* torch::pow(torch::clamp(1.0 - output[obj], 0.0), 2);
+				loss = torch::cat({ loss, tensor_buf }, 0);
+			}
 
-
-			//for (int obj = 1; obj < labels.sizes()[0]; obj++) {
-			//	auto tensor_buf = (1 - labels[obj]) * torch::pow(output[obj], 2) + (labels[obj])* torch::pow(torch::clamp(1.0 - output[obj], 0.0), 2);
-			//	loss = torch::cat({ loss, tensor_buf }, 0);
-			//}
-
-			//loss = torch::mean(loss);
-
-
-			auto loss = (1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2);
+			std::cout << "loss 1:\n" << loss << std::endl;
 			loss = torch::mean(loss);
+			std::cout << "loss 1 mean:\n" << loss << std::endl;
+			*/
+
+			auto loss = torch::diagonal((1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2));
+
+			//std::cout << "loss 2:\n" << loss << std::endl;
+			loss = torch::mean(loss);
+			//std::cout << "loss 2 mean:\n" << loss << std::endl;
+
+
 
 			loss.backward();
 			optimizer.step();
@@ -80,7 +85,9 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 		" Mean squared error: " << mse << " Validation data ";
 
 		model->eval();
+		model->to(torch::kCPU);
 		siam_test(data_val, model);
+		model->to(device);
 		model->train();
 
 		auto end = std::chrono::steady_clock::now();
@@ -106,7 +113,7 @@ void siam_classification(std::string path_img_1, std::string path_img_2, std::st
 	auto img_1 = img_to_tensor(path_img_1);
 	auto img_2 = img_to_tensor(path_img_2);
 
-	ConvNet model(3, 64, 64);
+	ConvNet model(3, 100, 200);
 	torch::load(model, path_NN);
 
 	model->eval();

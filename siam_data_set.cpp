@@ -44,6 +44,7 @@ void Siam_data_set::get_img(size_t index) {
 }
 
 Element_data Siam_data_set::get(size_t index) {
+	//_data.at(index).print();
 	if (data_in_ram)
 		return _data_mem.at(index);
 

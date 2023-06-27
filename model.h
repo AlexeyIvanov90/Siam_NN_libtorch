@@ -41,18 +41,15 @@ struct ConvNetImpl : public torch::nn::Module
 		return x;
 	};
 
-    torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
+	torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
 
 		x = first_forward(x);
 		y = first_forward(y);
+		auto dist = torch::abs(x - y);
+		dist = lin3(dist);
+		dist = torch::sigmoid(dist);
 
-		x = torch::abs(x - y);
-
-		x = lin3(x);
-
-		x = torch::sigmoid(x);
-
-		return x;
+		return dist;
     };
 
     // Get number of elements of output.
