@@ -23,6 +23,8 @@ private:
 
 	size_t count_batch = 0;
 	Siam_data_set data;
+	std::random_device rd = std::random_device{};
+
 
 	std::vector<size_t> random_index;
 public:

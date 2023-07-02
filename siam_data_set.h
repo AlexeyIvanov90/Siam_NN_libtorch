@@ -66,4 +66,5 @@ public:
 	void load_to_mem();
 };
 
+torch::Tensor img_to_tensor(cv::Mat scr);
 torch::Tensor img_to_tensor(std::string file_location);

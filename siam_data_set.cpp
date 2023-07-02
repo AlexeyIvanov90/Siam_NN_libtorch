@@ -22,16 +22,21 @@ auto ReadCsv(const std::string& location) -> std::vector<Element> {
 	return csv;
 }
 
-torch::Tensor img_to_tensor(std::string file_location) {
-	cv::Mat img = cv::imread(file_location);
-
-	torch::Tensor img_tensor = torch::from_blob(img.data, { img.rows, img.cols, 3 }, torch::kByte).clone();
+torch::Tensor img_to_tensor(cv::Mat scr) {
+	torch::Tensor img_tensor = torch::from_blob(scr.data, { scr.rows, scr.cols, 3 }, torch::kByte).clone();
 	img_tensor = img_tensor.toType(torch::kFloat);
 	img_tensor = img_tensor.div(255);
 	img_tensor = img_tensor.permute({ 2,0,1 });
 	img_tensor = img_tensor.unsqueeze(0);
 	return img_tensor;
 }
+
+torch::Tensor img_to_tensor(std::string file_location) {
+	cv::Mat img = cv::imread(file_location);
+	return img_to_tensor(img);
+}
+
+
 
 Siam_data_set::Siam_data_set(std::string paths_csv)
 {
@@ -44,7 +49,6 @@ void Siam_data_set::get_img(size_t index) {
 }
 
 Element_data Siam_data_set::get(size_t index) {
-	//_data.at(index).print();
 	if (data_in_ram)
 		return _data_mem.at(index);
 
@@ -67,4 +71,3 @@ void Siam_data_set::load_to_mem() {
 		_data_mem.push_back(get(i));
 	data_in_ram = true;
 }
-

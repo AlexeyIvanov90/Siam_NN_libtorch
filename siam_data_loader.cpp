@@ -9,7 +9,8 @@ Siam_data_loader::Siam_data_loader(Siam_data_set data, size_t batch_size) :data(
 }
 
 void Siam_data_loader::random_data() {
-	std::random_shuffle(random_index.begin(), random_index.end());
+	auto rng = std::default_random_engine{ rd() };
+	std::shuffle(random_index.begin(), random_index.end(), rng);
 }
 
 Batch Siam_data_loader::get_batch() {
@@ -62,4 +63,3 @@ size_t Siam_data_loader::num_batch() {
 size_t Siam_data_loader::size() {
 	return data_size;
 }
-

@@ -1,6 +1,6 @@
 #include "model.h"
 #include <chrono>
-
+#include <filesystem>
 
 
 void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string path_save_NN, int epochs, torch::Device device)
@@ -46,26 +46,10 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 			labels = labels.to(device);
 
 			auto output = model->forward(imgs_1, imgs_2);
-			/*
-			auto loss = (1 - labels[0]) * torch::pow(output[0], 2) + (labels[0])* torch::pow(torch::clamp(1.0 - output[0], 0.0), 2);
-
-			for (int obj = 1; obj < labels.sizes()[0]; obj++) {
-				auto tensor_buf = (1 - labels[obj]) * torch::pow(output[obj], 2) + (labels[obj])* torch::pow(torch::clamp(1.0 - output[obj], 0.0), 2);
-				loss = torch::cat({ loss, tensor_buf }, 0);
-			}
-
-			std::cout << "loss 1:\n" << loss << std::endl;
-			loss = torch::mean(loss);
-			std::cout << "loss 1 mean:\n" << loss << std::endl;
-			*/
 
 			auto loss = torch::diagonal((1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2));
 
-			//std::cout << "loss 2:\n" << loss << std::endl;
 			loss = torch::mean(loss);
-			//std::cout << "loss 2 mean:\n" << loss << std::endl;
-
-
 
 			loss.backward();
 			optimizer.step();
@@ -77,7 +61,6 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 			count++;
 		}
 		std::cout << "\r";
-
 
 		mse /= (float)count;
 
@@ -109,22 +92,6 @@ void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string
 	}
 }
 
-void siam_classification(std::string path_img_1, std::string path_img_2, std::string path_NN) {
-	auto img_1 = img_to_tensor(path_img_1);
-	auto img_2 = img_to_tensor(path_img_2);
-
-	ConvNet model(3, 100, 200);
-	torch::load(model, path_NN);
-
-	model->eval();
-
-	torch::Tensor result = model->forward(img_1, img_2);
-
-	if(result.template item<float>() < 0.5)
-		std::cout << "identical: " << 1.0 - result.template item<float>() << std::endl;
-	else
-		std::cout << "no identical: " << result.template item<float>()  << std::endl;
-}
 
 void siam_test(Siam_data_set data_test, ConvNet model){
 	int error = 0;
@@ -143,4 +110,51 @@ void siam_test(Siam_data_set data_test, ConvNet model){
 }
 
 
+/*
+src - изображение для классификации
+dir - папка в которой лежит модель и папки категорий с изображениями
+out - тензор с расстояниями между изображением и категорией*/
+torch::Tensor siam_classification(cv::Mat src, std::string dir) {
+	auto img = img_to_tensor(src);
+	torch::Tensor out;
 
+	std::filesystem::directory_iterator work_dir(dir);
+	size_t count_category = 0;
+
+	ConvNet model(3, 100, 200);
+	torch::load(model, dir + "/model.pt");
+	model->eval();
+
+	for (auto const& dir_entry : work_dir)
+	{
+		if (dir_entry.is_directory()) {
+			std::cout << "Category: " << dir_entry << '\n';
+			torch::Tensor buf;
+			size_t count_img = 0;
+
+			for (auto const& dir_category : std::filesystem::directory_iterator(dir_entry))
+			{
+				auto img_ = img_to_tensor(dir_category.path().string());
+				auto out_model = model->forward(img, img_);
+
+				if (count_img == 0)
+					buf = out_model;
+				else
+					buf = torch::cat({ buf, out_model }, 1);
+
+				count_img++;
+			}
+			
+			auto mean_error = torch::median(buf).view({1,1});
+
+			if (count_category == 0)
+				out = mean_error;
+			else
+				out = torch::cat({out, mean_error }, 1);
+
+			count_category++;
+		}
+	}
+
+	return out.softmax(1);
+}

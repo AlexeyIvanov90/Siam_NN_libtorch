@@ -28,7 +28,7 @@
 
 		Siam_data_loader train_loader(data_set_train, batch_size);
 
-		siam_train(train_loader, data_set_val, path_NN, epochs);
+		//siam_train(train_loader, data_set_val, path_NN, epochs);
 
 		ConvNet model(3, 100, 200);
 		torch::load(model, path_NN);
@@ -42,6 +42,13 @@
 		
 		std::cout << "Train data ";
 		siam_test(data_set_train, model);
+
+		cv::Mat img = cv::imread("../00000.png");
+		std::string work_path = "../work_path";
+
+		int class_img = torch::argmin(siam_classification(img, work_path)).template item<int>();
+
+		std::cout << "Class img: " << class_img << std::endl;
 
 		return 0;
 	}
