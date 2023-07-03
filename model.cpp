@@ -77,17 +77,20 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::stri
 		auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 		std::cout << "Time for epoch: " << elapsed_ms.count() << " ms\n";
 
+		model->to(torch::kCPU);
+		model->eval();
+		std::string model_file_name = "../models/epoch_" + std::to_string(epoch) + ".pt";
+		torch::save(model, model_file_name);
+
 		if (mse < best_mse)
 		{
-			model->to(torch::kCPU);
-			model->eval();
 			torch::save(model, path_save_NN);
 			best_mse = mse;
-			std::cout << "model save" << std::endl;
-			if (epoch != epochs) {
-				model->to(device);
-				model->train();
-			}
+		}
+
+		if (epoch != epochs) {
+			model->to(device);
+			model->train();
 		}
 	}
 }

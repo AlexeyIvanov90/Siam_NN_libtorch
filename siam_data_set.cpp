@@ -18,7 +18,6 @@ auto ReadCsv(const std::string& location) -> std::vector<Element> {
 
 		csv.push_back(buf);
 	}
-
 	return csv;
 }
 
