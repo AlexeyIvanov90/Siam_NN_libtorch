@@ -81,6 +81,6 @@ struct ConvNetImpl : public torch::nn::Module
 
 TORCH_MODULE(ConvNet);
 
-void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string path_save_NN, int epochs, torch::Device device = torch::kCPU);
+void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device = torch::kCPU);
 void siam_test(Siam_data_set data_test, ConvNet model);
 torch::Tensor siam_classification(cv::Mat src, std::string dir_model);

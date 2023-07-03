@@ -28,7 +28,7 @@ private:
 
 	std::vector<size_t> random_index;
 public:
-	Siam_data_loader(Siam_data_set data, size_t batch_size);
+	Siam_data_loader(Siam_data_set &data, size_t batch_size);
 
 	Batch get_batch();
 	size_t num_batch();

@@ -23,6 +23,7 @@ auto ReadCsv(const std::string& location) -> std::vector<Element> {
 }
 
 torch::Tensor img_to_tensor(cv::Mat scr) {
+	cv::cvtColor(scr, scr, CV_BGR2RGB);
 	torch::Tensor img_tensor = torch::from_blob(scr.data, { scr.rows, scr.cols, 3 }, torch::kByte).clone();
 	img_tensor = img_tensor.toType(torch::kFloat);
 	img_tensor = img_tensor.div(255);
@@ -31,11 +32,11 @@ torch::Tensor img_to_tensor(cv::Mat scr) {
 	return img_tensor;
 }
 
+
 torch::Tensor img_to_tensor(std::string file_location) {
 	cv::Mat img = cv::imread(file_location);
 	return img_to_tensor(img);
 }
-
 
 
 Siam_data_set::Siam_data_set(std::string paths_csv)

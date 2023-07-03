@@ -1,8 +1,6 @@
 #include "model.h"
 #include "siam_data_loader.h"
 
-
-
 int main()
 {
 	std::string train_csv = "../siam_data_train.csv"; //path csv file
@@ -12,7 +10,7 @@ int main()
 	std::string path_NN = "../best_model.pt"; //path model NN
 
 	auto epochs = 10000;
-	auto batch_size = 64;
+	auto batch_size = 1;
 	auto device = torch::kCPU;
 
 	if (torch::cuda::is_available()) {
@@ -28,7 +26,7 @@ int main()
 
 	Siam_data_loader train_loader(data_set_train, batch_size);
 
-	//siam_train(train_loader, data_set_val, path_NN, epochs);
+	siam_train(train_loader, data_set_val, path_NN, epochs);
 
 	ConvNet model(3, 100, 200);
 	torch::load(model, path_NN);

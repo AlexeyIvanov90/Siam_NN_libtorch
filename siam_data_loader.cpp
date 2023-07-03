@@ -1,6 +1,6 @@
 #include "siam_data_loader.h"
 
-Siam_data_loader::Siam_data_loader(Siam_data_set data, size_t batch_size) :data(data), batch_size(batch_size), data_size(data.size()) {
+Siam_data_loader::Siam_data_loader(Siam_data_set &data, size_t batch_size) :data(data), batch_size(batch_size), data_size(data.size()) {
 	random_index.resize(data_size);
 	for (size_t index = 0; index < random_index.size(); index++)
 		random_index.at(index) = index;

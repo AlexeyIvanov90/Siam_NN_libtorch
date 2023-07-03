@@ -3,7 +3,7 @@
 #include <filesystem>
 
 
-void siam_train(Siam_data_loader data_train, Siam_data_set data_val, std::string path_save_NN, int epochs, torch::Device device)
+void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device)
 {
 	if (device == torch::kCPU)
 		std::cout << "Training on CPU" << std::endl;
