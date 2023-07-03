@@ -36,13 +36,10 @@ struct ConvNetImpl : public torch::nn::Module
 
 		x = torch::relu(lin2(x));
 
-		//x = lin2(x);
-
 		return x;
 	};
 
 	torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
-
 		x = first_forward(x);
 		y = first_forward(y);
 		auto dist = torch::abs(x - y);
@@ -81,6 +78,6 @@ struct ConvNetImpl : public torch::nn::Module
 
 TORCH_MODULE(ConvNet);
 
-void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device = torch::kCPU);
+void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
 void siam_test(Siam_data_set data_test, ConvNet model);
 torch::Tensor siam_classification(cv::Mat src, std::string dir_model);

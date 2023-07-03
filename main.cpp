@@ -9,7 +9,7 @@ int main()
 
 	std::string path_NN = "../best_model.pt"; //path model NN
 
-	auto epochs = 10000;
+	auto epochs = 2;
 	auto batch_size = 1;
 	auto device = torch::kCPU;
 
@@ -26,11 +26,11 @@ int main()
 
 	Siam_data_loader train_loader(data_set_train, batch_size);
 
-	siam_train(train_loader, data_set_val, path_NN, epochs);
-
 	ConvNet model(3, 100, 200);
 	torch::load(model, path_NN);
 	model->eval();
+
+	siam_train(train_loader, data_set_val, model, epochs);
 
 	std::cout << "Test data ";
 	siam_test(data_set_test, model);

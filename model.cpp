@@ -3,14 +3,14 @@
 #include <filesystem>
 
 
-void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device)
+//void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device)
+void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device)
 {
 	if (device == torch::kCPU)
 		std::cout << "Training on CPU" << std::endl;
 	else
 		std::cout << "Training on GPU" << std::endl;
 
-	ConvNet model(3, 100, 200);
 	model->to(device);
 
 	torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
@@ -84,7 +84,7 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::stri
 
 		if (mse < best_mse)
 		{
-			torch::save(model, path_save_NN);
+			torch::save(model, "model.pt");
 			best_mse = mse;
 		}
 
@@ -109,7 +109,7 @@ void siam_test(Siam_data_set data_test, ConvNet model){
 		}
 	}
 
-	std::cout << "error: " << (float)error/data_test.size() <<std::endl;
+	std::cout << "error: " << (float)error/data_test.size() << std::endl;
 }
 
 
