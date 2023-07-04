@@ -1,5 +1,6 @@
 #include "siam_data_set.h"
 
+
 auto ReadCsv(const std::string& location) -> std::vector<Element> {
 	std::fstream in(location, std::ios::in);
 	std::string line;
@@ -20,6 +21,7 @@ auto ReadCsv(const std::string& location) -> std::vector<Element> {
 	}
 	return csv;
 }
+
 
 torch::Tensor img_to_tensor(cv::Mat scr) {
 	cv::cvtColor(scr, scr, CV_BGR2RGB);
@@ -43,10 +45,12 @@ Siam_data_set::Siam_data_set(std::string paths_csv)
 	_data = ReadCsv(paths_csv);
 }
 
+
 void Siam_data_set::get_img(size_t index) {
 	Element obj = _data.at(index);
 	obj.print();
 }
+
 
 Element_data Siam_data_set::get(size_t index) {
 	if (data_in_ram)
@@ -62,9 +66,11 @@ Element_data Siam_data_set::get(size_t index) {
 	return Element_data(img_1, img_2, label);
 }
 
+
 size_t Siam_data_set::size() {
 	return _data.size();
 }
+
 
 void Siam_data_set::load_to_mem() {
 	for(int i = 0; i < _data.size(); i++)

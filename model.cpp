@@ -3,7 +3,6 @@
 #include <filesystem>
 
 
-//void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, std::string path_save_NN, int epochs, torch::Device device)
 void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device)
 {
 	if (device == torch::kCPU)
@@ -64,18 +63,27 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 
 		mse /= (float)count;
 
-		std::cout << "Train Epoch: " << epoch << "/" << epochs <<
-		" Mean squared error: " << mse << " Validation data ";
-
 		model->eval();
 		model->to(torch::kCPU);
-		siam_test(data_val, model);
+		double val_error = siam_test(data_val, model);
 		model->to(device);
 		model->train();
 
 		auto end = std::chrono::steady_clock::now();
 		auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 		std::cout << "Time for epoch: " << elapsed_ms.count() << " ms\n";
+
+		std::string stat = "Train Epoch: " + std::to_string(epoch) + "/" + std::to_string(epochs) +	
+			" Mean squared error: "  + std::to_string(mse) + 
+			" Validation data " + std::to_string(val_error) + "\n";
+
+		std::ofstream out;
+		out.open("../models/stat.txt", std::ios::app);
+		if (out.is_open())
+			out << stat;
+		out.close();
+
+		std::cout << stat;
 
 		model->to(torch::kCPU);
 		model->eval();
@@ -84,7 +92,7 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 
 		if (mse < best_mse)
 		{
-			torch::save(model, "model.pt");
+			torch::save(model, "../model.pt");
 			best_mse = mse;
 		}
 
@@ -96,26 +104,26 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 }
 
 
-void siam_test(Siam_data_set data_test, ConvNet model){
+double siam_test(Siam_data_set data_test, ConvNet model){
 	int error = 0;
 
 	for (int i = 0; i < data_test.size(); i++) {
 		auto data = data_test.get(i);
 		auto out_model = model->forward(data.img_1, data.img_2);
 
-		if ((out_model.template item<float>() < 0.5 && data.label.template item<int>() != 0)||
-			(out_model.template item<float>() >= 0.5 && data.label.template item<int>() != 1)) {
+		if ((out_model.template item<double>() < 0.5 && data.label.template item<int>() != 0)||
+			(out_model.template item<double>() >= 0.5 && data.label.template item<int>() != 1)) {
 			error++;
 		}
 	}
 
-	std::cout << "error: " << (float)error/data_test.size() << std::endl;
+	return (double)error / data_test.size();
 }
 
 
 /*
 src - изображение для классификации
-dir - папка в которой лежит модель и папки категорий с изображениями
+dir - папка в которой лежит модель и папки категорий с изображениями для сравнения
 out - тензор с расстояниями между изображением и категорией*/
 torch::Tensor siam_classification(cv::Mat src, std::string dir) {
 	auto img = img_to_tensor(src);

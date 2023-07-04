@@ -3,9 +3,9 @@
 #include <vector>
 #include <tuple>
 #include <string>
-
 #include <torch/torch.h>
 #include <opencv2/opencv.hpp>
+
 
 struct Element
 {
@@ -33,6 +33,7 @@ struct Element
 	int label;
 };
 
+
 struct Element_data
 {
 	Element_data(torch::Tensor img_1, torch::Tensor img_2, torch::Tensor label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
@@ -48,6 +49,7 @@ struct Element_data
 	torch::Tensor img_2;
 	torch::Tensor label;
 };
+
 
 class Siam_data_set
 {
@@ -65,6 +67,7 @@ public:
 
 	void load_to_mem();
 };
+
 
 torch::Tensor img_to_tensor(cv::Mat scr);
 torch::Tensor img_to_tensor(std::string file_location);

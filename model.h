@@ -3,6 +3,7 @@
 #include "siam_data_set.h"
 #include "siam_data_loader.h"
 
+
 struct ConvNetImpl : public torch::nn::Module 
 {
     ConvNetImpl(int64_t channels, int64_t height, int64_t width) 
@@ -23,7 +24,7 @@ struct ConvNetImpl : public torch::nn::Module
         register_module("lin2", lin2);
 		register_module("lin3", lin3);
     };
-
+	
 	torch::Tensor first_forward(torch::Tensor x) {
 		x = torch::relu(torch::max_pool2d(conv1(x), 2));
 		x = torch::batch_norm(bn2d_1->forward(x), bn1W, bnBias1W, bnmean1W, bnvar1W, true, 0.9, 0.001, true);
@@ -31,14 +32,12 @@ struct ConvNetImpl : public torch::nn::Module
 		x = torch::batch_norm(bn2d_2->forward(x), bn2W, bnBias2W, bnmean2W, bnvar2W, true, 0.9, 0.001, true);
 
 		x = x.view({ -1, n });
-
 		x = torch::relu(lin1(x));
-
 		x = torch::relu(lin2(x));
 
 		return x;
 	};
-
+	
 	torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
 		x = first_forward(x);
 		y = first_forward(y);
@@ -49,16 +48,13 @@ struct ConvNetImpl : public torch::nn::Module
 		return dist;
     };
 
-    // Get number of elements of output.
     int64_t GetConvOutput(int64_t channels, int64_t height, int64_t width) {
-
-        torch::Tensor x = torch::zeros({1, channels, height, width});
+		torch::Tensor x = torch::zeros({1, channels, height, width});
         x = torch::max_pool2d(conv1(x), 2);
         x = torch::max_pool2d(conv2(x), 2);
 
         return x.numel();
     }
-
 
     torch::nn::Conv2d conv1, conv2;
 	torch::nn::BatchNorm2d bn2d_1, bn2d_2;
@@ -78,6 +74,9 @@ struct ConvNetImpl : public torch::nn::Module
 
 TORCH_MODULE(ConvNet);
 
+
 void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
-void siam_test(Siam_data_set data_test, ConvNet model);
+double siam_test(Siam_data_set data_test, ConvNet model);
 torch::Tensor siam_classification(cv::Mat src, std::string dir_model);
+
+

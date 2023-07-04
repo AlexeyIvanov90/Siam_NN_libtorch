@@ -27,19 +27,16 @@ int main()
 	Siam_data_loader train_loader(data_set_train, batch_size);
 
 	ConvNet model(3, 100, 200);
-	torch::load(model, path_NN);
+	//torch::load(model, path_NN);
 	model->eval();
 
 	siam_train(train_loader, data_set_val, model, epochs);
 
-	std::cout << "Test data ";
-	siam_test(data_set_test, model);
+	std::cout << "Test data error: " << siam_test(data_set_test, model) << std::endl;
 
-	std::cout << "Val data ";
-	siam_test(data_set_val, model);
+	std::cout << "Val data " << siam_test(data_set_val, model) << std::endl;
 
-	std::cout << "Train data ";
-	siam_test(data_set_train, model);
+	std::cout << "Train data "<< siam_test(data_set_train, model) << std::endl;
 
 	cv::Mat img = cv::imread("../00000.png");
 	std::string work_path = "../work_path";

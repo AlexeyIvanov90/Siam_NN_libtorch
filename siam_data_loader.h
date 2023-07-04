@@ -3,6 +3,7 @@
 #include "siam_data_set.h"
 #include <random> 
 
+
 struct Batch
 {
 	Batch(torch::Tensor img_1, torch::Tensor img_2, torch::Tensor  label) :img_1(img_1), img_2(img_2), label(label) {};
@@ -10,6 +11,7 @@ struct Batch
 	torch::Tensor img_2;
 	torch::Tensor label;
 };
+
 
 class Siam_data_loader
 {

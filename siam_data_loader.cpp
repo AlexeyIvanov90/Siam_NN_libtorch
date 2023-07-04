@@ -8,10 +8,12 @@ Siam_data_loader::Siam_data_loader(Siam_data_set &data, size_t batch_size) :data
 	random_data();
 }
 
+
 void Siam_data_loader::random_data() {
 	auto rng = std::default_random_engine{ rd() };
 	std::shuffle(random_index.begin(), random_index.end(), rng);
 }
+
 
 Batch Siam_data_loader::get_batch() {
 	bool flag = false;
@@ -41,6 +43,7 @@ Batch Siam_data_loader::get_batch() {
 	return Batch(batch_img_1, batch_img_2, batch_label);
 }
 
+
 bool Siam_data_loader::epoch_end() {
 	if (count_batch == data_size) {
 		count_batch = 0;
@@ -52,13 +55,16 @@ bool Siam_data_loader::epoch_end() {
 	}
 }
 
+
 size_t Siam_data_loader::size_batch() {
 	return batch_size;
 }
 
+
 size_t Siam_data_loader::num_batch() {
 	return count_batch / batch_size;
 }
+
 
 size_t Siam_data_loader::size() {
 	return data_size;
