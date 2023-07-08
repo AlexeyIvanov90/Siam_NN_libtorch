@@ -2,6 +2,7 @@
 
 #include "siam_data_set.h"
 #include "siam_data_loader.h"
+#include "data_set.h"
 
 
 struct ConvNetImpl : public torch::nn::Module 
@@ -12,15 +13,17 @@ struct ConvNetImpl : public torch::nn::Module
         conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
 		bn2d_2(torch::nn::BatchNorm2d(16)),
         n(GetConvOutput(channels, height, width)),
-        lin1(n, 64),
-        lin2(64, 64),
-		lin3(64, 1) {
+
+        lin1(n, 128),
+        lin2(128, 64),
+		lin3(1, 1) {
 
         register_module("conv1", conv1);
 		register_module("bn2d_1", bn2d_1);
         register_module("conv2", conv2);
 		register_module("bn2d_2", bn2d_2);
-        register_module("lin1", lin1);
+
+        register_module("lin1", lin1); 
         register_module("lin2", lin2);
 		register_module("lin3", lin3);
     };
@@ -33,6 +36,9 @@ struct ConvNetImpl : public torch::nn::Module
 
 		x = x.view({ -1, n });
 		x = torch::relu(lin1(x));
+
+		//x = torch::dropout(x, 0.25, is_training());
+
 		x = torch::relu(lin2(x));
 
 		return x;
@@ -41,9 +47,11 @@ struct ConvNetImpl : public torch::nn::Module
 	torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
 		x = first_forward(x);
 		y = first_forward(y);
-		auto dist = torch::abs(x - y);
-		dist = lin3(dist);
-		dist = torch::sigmoid(dist);
+
+		//auto dist = torch::abs(x - y);
+		//auto dist = torch::pairwise_distance(x, y);
+		auto dist = torch::_euclidean_dist(x, y);
+		dist = torch::sigmoid(lin3(dist));
 
 		return dist;
     };
@@ -58,6 +66,7 @@ struct ConvNetImpl : public torch::nn::Module
 
     torch::nn::Conv2d conv1, conv2;
 	torch::nn::BatchNorm2d bn2d_1, bn2d_2;
+
     int64_t n;
     torch::nn::Linear lin1, lin2, lin3;
 
@@ -75,8 +84,7 @@ struct ConvNetImpl : public torch::nn::Module
 TORCH_MODULE(ConvNet);
 
 
-void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
+void siam_train(Siam_data_loader &data_train, Siam_data_loader &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
 double siam_test(Siam_data_set data_test, ConvNet model);
-torch::Tensor siam_classification(cv::Mat src, std::string dir_model);
-
-
+torch::Tensor multy_shot_classificator(torch::Tensor src, std::string dir_model);
+double multy_shot_accuracy(Data_set scr, std::string dir);

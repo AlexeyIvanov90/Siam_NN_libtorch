@@ -7,13 +7,13 @@
 #include <opencv2/opencv.hpp>
 
 
-struct Element
+struct Siam_element
 {
-	Element() {};
-	Element(std::string img_1, std::string img_2, int label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
+	Siam_element() {};
+	Siam_element(std::string img_1, std::string img_2, int label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
 
 	void print() {
-		std::cout << "Element:" << std::endl;
+		std::cout << "Siam_element:" << std::endl;
 		cv::Mat img_1_show = cv::imread(img_1);
 		cv::Mat img_2_show = cv::imread(img_2);
 
@@ -34,12 +34,12 @@ struct Element
 };
 
 
-struct Element_data
+struct Siam_element_data
 {
-	Element_data(torch::Tensor img_1, torch::Tensor img_2, torch::Tensor label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
+	Siam_element_data(torch::Tensor img_1, torch::Tensor img_2, torch::Tensor label) :img_1{ img_1 }, img_2{ img_2 }, label{ label } {};
 
 	void print() {
-		std::cout << "Element:" << std::endl;
+		std::cout << "Siam_element:" << std::endl;
 		std::cout << img_1.sizes() << std::endl;
 		std::cout << img_2.sizes() << std::endl;
 		std::cout << label << std::endl;
@@ -54,20 +54,16 @@ struct Element_data
 class Siam_data_set
 {
 private:
-	std::vector<Element> _data;
-	std::vector<Element_data> _data_mem;
+	std::vector<Siam_element> _data;
+	std::vector<Siam_element_data> _data_mem;
 	bool data_in_ram = false;
 
 public:	
 	Siam_data_set(std::string paths_csv);
-	Element_data get(size_t index);
+	Siam_element_data get(size_t index);
 
 	void get_img(size_t index);
 	size_t size();
 
 	void load_to_mem();
 };
-
-
-torch::Tensor img_to_tensor(cv::Mat scr);
-torch::Tensor img_to_tensor(std::string file_location);

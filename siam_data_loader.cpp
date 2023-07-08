@@ -20,14 +20,14 @@ Batch Siam_data_loader::get_batch() {
 
 	for (; count_batch < data_size; ) {
 		if (count_batch%batch_size == 0) {
-			Element_data x = data.get(random_index.at(count_batch));
+			Siam_element_data x = data.get(random_index.at(count_batch));
 
 			batch_img_1 = x.img_1;
 			batch_img_2 = x.img_2;
 			batch_label = x.label;
 		}
 		else {
-			Element_data x = data.get(random_index.at(count_batch));
+			Siam_element_data x = data.get(random_index.at(count_batch));
 
 			batch_img_1 = torch::cat({ batch_img_1, x.img_1 }, 0);
 			batch_img_2 = torch::cat({ batch_img_2, x.img_2 }, 0);

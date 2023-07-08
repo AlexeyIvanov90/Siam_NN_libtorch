@@ -3,7 +3,7 @@
 #include <filesystem>
 
 
-void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device)
+void siam_train(Siam_data_loader &data_train, Siam_data_loader &data_val, ConvNet model, int epochs, torch::Device device)
 {
 	if (device == torch::kCPU)
 		std::cout << "Training on CPU" << std::endl;
@@ -24,13 +24,15 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 	for (int epoch = 1; epoch <= epochs; epoch++) {
 		auto begin = std::chrono::steady_clock::now();
 
-		float mse = 0.; // mean squared error
-		int count = 0;
+		float train_mse = 0.;
+		int train_count = 0;
+
+		float val_mse = 0.;		
+		int val_count = 0;
 
 		size_t bath_counter = 0;
 
 		for (; !data_train.epoch_end();) {
-
 			std::string consol_text = "\r" + std::to_string((int)(((data_train.num_batch()) / ((float)dataset_size/ data_train.size_batch()))*100)) + "%";
 			std::cout << consol_text;
 
@@ -47,35 +49,53 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 			auto output = model->forward(imgs_1, imgs_2);
 
 			auto loss = torch::diagonal((1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2));
-
 			loss = torch::mean(loss);
 
 			loss.backward();
 			optimizer.step();
 
-			mse += loss.template item<float>();
-
+			train_mse += loss.template item<float>();
 			optimizer.zero_grad();
-
-			count++;
+			train_count++;
 		}
+
+
+
+		for (; !data_val.epoch_end();) {
+			model->eval();
+			Batch data = data_val.get_batch();
+
+			auto imgs_1 = data.img_1;
+			auto imgs_2 = data.img_2;
+			auto labels = data.label.squeeze();
+
+			imgs_1 = imgs_1.to(device);
+			imgs_2 = imgs_2.to(device);
+			labels = labels.to(device);
+
+			auto output = model->forward(imgs_1, imgs_2);
+
+			auto loss = torch::diagonal((1 - labels) * torch::pow(output, 2) + (labels)* torch::pow(torch::clamp(1.0 - output, 0.0), 2));
+			loss = torch::mean(loss);
+
+			val_mse += loss.template item<float>();
+
+			val_count++;
+			model->train();
+		}
+
 		std::cout << "\r";
 
-		mse /= (float)count;
-
-		model->eval();
-		model->to(torch::kCPU);
-		double val_error = siam_test(data_val, model);
-		model->to(device);
-		model->train();
+		train_mse /= (float)train_count;
+		val_mse /= (float)val_count;
 
 		auto end = std::chrono::steady_clock::now();
 		auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 		std::cout << "Time for epoch: " << elapsed_ms.count() << " ms\n";
 
 		std::string stat = "Train Epoch: " + std::to_string(epoch) + "/" + std::to_string(epochs) +	
-			" Mean squared error: "  + std::to_string(mse) + 
-			" Validation data " + std::to_string(val_error) + "\n";
+			" Mean squared error: "  + std::to_string(train_mse) +
+			" Validation data " + std::to_string(val_mse) + "\n";
 
 		std::ofstream out;
 		out.open("../models/stat.txt", std::ios::app);
@@ -90,10 +110,10 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 		std::string model_file_name = "../models/epoch_" + std::to_string(epoch) + ".pt";
 		torch::save(model, model_file_name);
 
-		if (mse < best_mse)
+		if (train_mse < best_mse)
 		{
-			torch::save(model, "../model.pt");
-			best_mse = mse;
+			torch::save(model, "../best_model.pt");
+			best_mse = train_mse;
 		}
 
 		if (epoch != epochs) {
@@ -121,12 +141,7 @@ double siam_test(Siam_data_set data_test, ConvNet model){
 }
 
 
-/*
-src - изображение для классификации
-dir - папка в которой лежит модель и папки категорий с изображениями для сравнения
-out - тензор с расстояниями между изображением и категорией*/
-torch::Tensor siam_classification(cv::Mat src, std::string dir) {
-	auto img = img_to_tensor(src);
+torch::Tensor multy_shot_classificator(torch::Tensor src, std::string dir) {
 	torch::Tensor out;
 
 	std::filesystem::directory_iterator work_dir(dir);
@@ -139,33 +154,45 @@ torch::Tensor siam_classification(cv::Mat src, std::string dir) {
 	for (auto const& dir_entry : work_dir)
 	{
 		if (dir_entry.is_directory()) {
-			std::cout << "Category: " << dir_entry << '\n';
 			torch::Tensor buf;
-			size_t count_img = 0;
+			int count_img = 0;
 
 			for (auto const& dir_category : std::filesystem::directory_iterator(dir_entry))
 			{
-				auto img_ = img_to_tensor(dir_category.path().string());
-				auto out_model = model->forward(img, img_);
+				auto img = img_to_tensor(dir_category.path().string());
+				auto out_model = model->forward(src, img);
 
 				if (count_img == 0)
 					buf = out_model;
-				else
-					buf = torch::cat({ buf, out_model }, 1);
 
+				out = torch::cat({ buf, out_model }, 1);
 				count_img++;
 			}
 			
-			auto mean_error = torch::median(buf).view({1,1});
+			auto mean_error = torch::mean(buf).view({1,1});
 
 			if (count_category == 0)
-				out = mean_error;
-			else
-				out = torch::cat({out, mean_error }, 1);
+				out = buf;
+			
+			out = torch::cat({out, buf }, 1);
 
 			count_category++;
 		}
 	}
 
 	return out.softmax(1);
+}
+
+
+double multy_shot_accuracy(Data_set scr, std::string dir){
+	size_t error = 0;
+	for (int i = 0; i < scr.size(); i++) {
+		Element_data obj = scr.get(i);
+		int class_img = torch::argmin(multy_shot_classificator(obj.img, dir)).template item<int>();
+		std::cout << "Label: " << obj.label.template item<int>() << " Result NN: " << class_img <<std::endl;
+		if (class_img != obj.label.template item<int>())
+			error++;
+	}
+
+	return (double)error/scr.size();
 }
