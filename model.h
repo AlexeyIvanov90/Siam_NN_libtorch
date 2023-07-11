@@ -14,8 +14,8 @@ struct ConvNetImpl : public torch::nn::Module
 		bn2d_2(torch::nn::BatchNorm2d(16)),
         n(GetConvOutput(channels, height, width)),
 
-        lin1(n, 128),
-        lin2(128, 64),
+        lin1(n, 64),
+        lin2(64, 32),
 		lin3(1, 1) {
 
         register_module("conv1", conv1);
@@ -51,6 +51,7 @@ struct ConvNetImpl : public torch::nn::Module
 		//auto dist = torch::abs(x - y);
 		//auto dist = torch::pairwise_distance(x, y);
 		auto dist = torch::_euclidean_dist(x, y);
+
 		dist = torch::sigmoid(lin3(dist));
 
 		return dist;
@@ -84,7 +85,7 @@ struct ConvNetImpl : public torch::nn::Module
 TORCH_MODULE(ConvNet);
 
 
-void siam_train(Siam_data_loader &data_train, Siam_data_loader &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
+void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet model, int epochs, torch::Device device = torch::kCPU);
 double siam_test(Siam_data_set data_test, ConvNet model);
 torch::Tensor multy_shot_classificator(torch::Tensor src, std::string dir_model);
 double multy_shot_accuracy(Data_set scr, std::string dir);
