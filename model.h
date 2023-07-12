@@ -37,7 +37,7 @@ struct ConvNetImpl : public torch::nn::Module
 		x = x.view({ -1, n });
 		x = torch::relu(lin1(x));
 
-		//x = torch::dropout(x, 0.25, is_training());
+		x = torch::dropout(x, 0.2, is_training());
 
 		x = torch::relu(lin2(x));
 

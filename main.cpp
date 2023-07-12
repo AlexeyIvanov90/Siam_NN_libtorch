@@ -28,7 +28,6 @@ int main()
 
 	device = torch::kCPU;
 
-
 	Siam_data_set data_set_siam_train(siam_train_csv);
 	data_set_siam_train.load_to_mem();
 
@@ -36,7 +35,6 @@ int main()
 	Siam_data_set data_set_siam_test(siam_test_csv);
 
 	Siam_data_loader train_loader(data_set_siam_train, batch_size);
-
 
 	ConvNet model(3, 100, 200);
 
