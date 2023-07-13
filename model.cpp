@@ -74,6 +74,20 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 			" Mean squared error: "  + std::to_string(train_mse) +
 			" Validation data " + std::to_string(val_error) + "\n";
 
+		std::string model_file_name = "../models/epoch_" + std::to_string(epoch);
+
+		model->to(torch::kCPU);
+		model->eval();
+
+		if (val_error < best_mse)
+		{
+			stat = stat + "save model\n";
+			model_file_name = model_file_name + "_best";
+
+			torch::save(model, "../best_model.pt");
+			best_mse = val_error;
+		}
+
 		std::ofstream out;
 		out.open("../models/stat.txt", std::ios::app);
 		if (out.is_open())
@@ -81,18 +95,8 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 		out.close();
 
 		std::cout << stat;
+		torch::save(model, model_file_name +".pt");
 
-		model->to(torch::kCPU);
-		model->eval();
-		std::string model_file_name = "../models/epoch_" + std::to_string(epoch) + ".pt";
-		torch::save(model, model_file_name);
-
-		if (val_error < best_mse)
-		{
-			std::cout << "save model" << std::endl;
-			torch::save(model, "../best_model.pt");
-			best_mse = val_error;
-		}
 
 		if (epoch != epochs) {
 			model->to(device);
