@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DATASET_H
+#define DATASET_H
 
 #include <vector>
 #include <tuple>
@@ -58,6 +59,4 @@ public:
 	size_t size();
 };
 
-
-torch::Tensor img_to_tensor(cv::Mat scr);
-torch::Tensor img_to_tensor(std::string file_location);
+#endif

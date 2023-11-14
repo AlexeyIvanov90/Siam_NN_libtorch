@@ -1,69 +1,36 @@
-#pragma once
+#ifndef MODEL_H
+#define MODEL_H
 
-#include "siam_data_set.h"
-#include "siam_data_loader.h"
-#include "data_set.h"
+#include <torch/torch.h>
 
+class Data_set;
+class Siam_data_set;
+class Siam_data_loader;
+
+struct BasicBlock : torch::nn::Module {
+
+	static const int expansion;
+
+	int64_t stride;
+	torch::nn::Conv2d conv1;
+	torch::nn::BatchNorm2d bn1;
+	torch::nn::Conv2d conv2;
+	torch::nn::BatchNorm2d bn2;
+	torch::nn::Sequential downsample;
+
+	BasicBlock(int64_t inplanes, int64_t planes, int64_t stride_ = 1,
+		torch::nn::Sequential downsample_ = torch::nn::Sequential());
+
+	torch::Tensor forward(torch::Tensor x);
+};
 
 struct ConvNetImpl : public torch::nn::Module 
 {
-    ConvNetImpl(int64_t channels, int64_t height, int64_t width) 
-		: conv1(torch::nn::Conv2dOptions(3 /*input channels*/, 8 /*output channels*/, 5 /*kernel size*/).stride(2)),
-		bn2d_1(torch::nn::BatchNorm2d(8)),
-        conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(2)),
-		bn2d_2(torch::nn::BatchNorm2d(16)),
-        n(GetConvOutput(channels, height, width)),
+	ConvNetImpl(int64_t channels, int64_t height, int64_t width);
+	torch::Tensor first_forward(torch::Tensor x);
+	torch::Tensor forward(torch::Tensor x, torch::Tensor y);
 
-        lin1(n, 64),
-        lin2(64, 32),
-		lin3(1, 1) {
-
-        register_module("conv1", conv1);
-		register_module("bn2d_1", bn2d_1);
-        register_module("conv2", conv2);
-		register_module("bn2d_2", bn2d_2);
-
-        register_module("lin1", lin1); 
-        register_module("lin2", lin2);
-		register_module("lin3", lin3);
-    };
-	
-	torch::Tensor first_forward(torch::Tensor x) {
-		x = torch::relu(torch::max_pool2d(conv1(x), 2));
-		x = torch::batch_norm(bn2d_1->forward(x), bn1W, bnBias1W, bnmean1W, bnvar1W, true, 0.9, 0.001, true);
-		x = torch::relu(torch::max_pool2d(conv2(x), 2));
-		x = torch::batch_norm(bn2d_2->forward(x), bn2W, bnBias2W, bnmean2W, bnvar2W, true, 0.9, 0.001, true);
-
-		x = x.view({ -1, n });
-		x = torch::relu(lin1(x));
-
-		x = torch::dropout(x, 0.2, is_training());
-
-		x = torch::relu(lin2(x));
-
-		return x;
-	};
-	
-	torch::Tensor forward(torch::Tensor x, torch::Tensor y) {
-		x = first_forward(x);
-		y = first_forward(y);
-
-		//auto dist = torch::abs(x - y);
-		//auto dist = torch::pairwise_distance(x, y);
-		auto dist = torch::_euclidean_dist(x, y);
-
-		dist = torch::sigmoid(lin3(dist));
-
-		return dist;
-    };
-
-    int64_t GetConvOutput(int64_t channels, int64_t height, int64_t width) {
-		torch::Tensor x = torch::zeros({1, channels, height, width});
-        x = torch::max_pool2d(conv1(x), 2);
-        x = torch::max_pool2d(conv2(x), 2);
-
-        return x.numel();
-    }
+	int64_t GetConvOutput(int64_t channels, int64_t height, int64_t width);
 
     torch::nn::Conv2d conv1, conv2;
 	torch::nn::BatchNorm2d bn2d_1, bn2d_2;
@@ -89,3 +56,5 @@ void siam_train(Siam_data_loader &data_train, Siam_data_set &data_val, ConvNet m
 double siam_test(Siam_data_set data_test, ConvNet model);
 torch::Tensor multy_shot_classificator(torch::Tensor src, std::string dir_model);
 double multy_shot_accuracy(Data_set scr, std::string dir);
+
+#endif

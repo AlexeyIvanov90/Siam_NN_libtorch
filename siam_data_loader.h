@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIAM_DATA_LOADER_H
+#define SIAM_DATA_LOADER_H
 
 #include "siam_data_set.h"
 #include <random> 
@@ -39,3 +40,5 @@ public:
 
 	void random_data();
 };
+
+#endif

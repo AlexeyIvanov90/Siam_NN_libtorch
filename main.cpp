@@ -1,6 +1,7 @@
 #include "model.h"
 #include "siam_data_loader.h"
 #include "data_set.h"
+#include "utility.h"
 
 int main()
 {
@@ -49,7 +50,7 @@ int main()
 	int class_img = torch::argmin(multy_shot_classificator(img_to_tensor(img), work_path)).template item<int>();
 	std::cout << "class img: " << class_img << std::endl;
 
-	Data_set data_set_test(test_csv);
+	Data_set data_set_test("../data_test_1.csv");
 	std::cout << "Test data multy shot error:\n" << multy_shot_accuracy(data_set_test, work_path) << std::endl;
 
 	return 0;

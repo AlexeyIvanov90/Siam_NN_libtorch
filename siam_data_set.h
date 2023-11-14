@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIAM_DATA_SET_H
+#define SIAM_DATA_SET_H
 
 #include <vector>
 #include <tuple>
@@ -67,3 +68,5 @@ public:
 
 	void load_to_mem();
 };
+
+#endif

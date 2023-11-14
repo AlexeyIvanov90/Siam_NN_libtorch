@@ -1,5 +1,7 @@
 #include "siam_data_set.h"
 #include "data_set.h"
+#include "utility.h"
+
 
 
 auto siam_read_csv(const std::string& location) -> std::vector<Siam_element> {
